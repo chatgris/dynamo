@@ -112,10 +112,11 @@ defmodule Dynamo.HTTP.Case do
 
       post("/foo")
       post(conn, "/foo")
+      post(conn, "/foo", "body")
 
   """
-  defmacro post(arg1, arg2 // nil) do
-    do_method :POST, arg1, arg2
+  defmacro post(arg1, arg2 // nil, arg3 // nil) do
+    do_method :POST, arg1, arg2, arg3
   end
 
   @doc """
@@ -123,10 +124,11 @@ defmodule Dynamo.HTTP.Case do
 
       put("/foo")
       put(conn, "/foo")
+      put(conn, "/foo", "body")
 
   """
-  defmacro put(arg1, arg2 // nil) do
-    do_method :PUT, arg1, arg2
+  defmacro put(arg1, arg2 // nil, arg3 // nil) do
+    do_method :PUT, arg1, arg2, arg3
   end
 
   @doc """
@@ -163,6 +165,12 @@ defmodule Dynamo.HTTP.Case do
     end
   end
 
+  defp do_method(method, arg1, arg2, arg3) do
+    quote do
+      unquote(__MODULE__).process @endpoint, unquote(arg1), unquote(method), unquote(arg2), unquote(arg3)
+    end
+  end
+
   @doc """
   Writes a session cookie according to the current store to
   be used in the next request. This is the preferred way to
@@ -191,6 +199,11 @@ defmodule Dynamo.HTTP.Case do
   def process(endpoint, conn, method, path) when is_tuple(conn) do
     conn = if conn.sent_body, do: conn.recycle, else: conn
     do_process endpoint, conn.req(method, path)
+  end
+
+  def process(endpoint, conn, method, path, body) do
+    conn = if conn.sent_body, do: conn.recycle, else: conn
+    do_process endpoint, conn.req(method, path, body)
   end
 
   def process(endpoint, method, path, nil) do
